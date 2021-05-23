@@ -1,8 +1,10 @@
 {
   "canisters": {
     "communitea": {
-      "main": "src/communitea/main.mo",
-      "type": "motoko"
+      "build": "./build.sh",
+      "candid": "src/communitea/communitea.did",
+      "wasm": "target/wasm32-unknown-unknown/release/communitea-opt.wasm",
+      "type": "custom"
     },
     "communitea_assets": {
       "dependencies": [
