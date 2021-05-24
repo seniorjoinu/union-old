@@ -1,0 +1,11 @@
+type Error = variant {
+    InsufficientBalance;
+    AccessDenied;
+}
+
+service : {
+    "balance_of": (principal) -> (nat) query;
+    "mint": (principal, nat) -> (opt Error);
+    "send": (principal, nat) -> (opt Error);
+    "burn": (nat) -> (opt Error);
+}

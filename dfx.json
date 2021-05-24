@@ -1,23 +1,10 @@
 {
   "canisters": {
-    "communitea": {
-      "build": "./build.sh",
-      "candid": "src/communitea/communitea.did",
-      "wasm": "target/wasm32-unknown-unknown/release/communitea-opt.wasm",
+    "voting_token": {
+      "build": "cargo build --target wasm32-unknown-unknown --package voting_token --release",
+      "candid": "src/voting_token/voting_token.did",
+      "wasm": "target/wasm32-unknown-unknown/release/voting_token.wasm",
       "type": "custom"
-    },
-    "communitea_assets": {
-      "dependencies": [
-        "communitea"
-      ],
-      "frontend": {
-        "entrypoint": "src/communitea_assets/src/index.html"
-      },
-      "source": [
-        "src/communitea_assets/assets",
-        "dist/communitea_assets/"
-      ],
-      "type": "assets"
     }
   },
   "defaults": {
