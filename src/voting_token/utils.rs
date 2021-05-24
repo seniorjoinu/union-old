@@ -1,6 +1,6 @@
 use ic_cdk::export::candid::{CandidType, Deserialize, Nat, Principal};
 use ic_cdk::trap;
-use std::collections::{HashMap, LinkedList};
+use std::collections::HashMap;
 
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct VotingToken {
@@ -29,7 +29,7 @@ fn lookup_history(
     let right_timestamp = history.get(mid_right).unwrap().timestamp;
 
     // if we're in between (left is lower, right is higher) or if we found exact value - return its index
-    if left_timestamp < timestamp && right_timestamp > timestamp {
+    if left_timestamp <= timestamp && right_timestamp > timestamp {
         return Some(mid_left);
     }
 
@@ -47,7 +47,7 @@ fn lookup_history(
         return lookup_history(history, begin, mid_left, timestamp);
     }
 
-    // it is impossible, because we checked boundaries before
+    // it is impossible, because we've checked boundaries before
     None
 }
 

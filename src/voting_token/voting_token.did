@@ -4,7 +4,7 @@ type Error = variant {
 }
 
 service : {
-    "balance_of": (principal) -> (nat) query;
+    "balance_of": (principal, opt int64) -> (nat) query;
     "mint": (principal, nat) -> (opt Error);
     "send": (principal, nat) -> (opt Error);
     "burn": (nat) -> (opt Error);
