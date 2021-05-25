@@ -1,4 +1,5 @@
 [workspace]
 members = [
-    "src/voting_token"
+    "src/voting_token",
+    "src/votings"
 ]

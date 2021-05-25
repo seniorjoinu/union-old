@@ -5,6 +5,12 @@
       "candid": "src/voting_token/voting_token.did",
       "wasm": "target/wasm32-unknown-unknown/release/voting_token.wasm",
       "type": "custom"
+    },
+    "votings": {
+      "build": "cargo build --target wasm32-unknown-unknown --package votings --release",
+      "candid": "src/votings/votings.did",
+      "wasm": "target/wasm32-unknown-unknown/release/votings.wasm",
+      "type": "custom"
     }
   },
   "defaults": {
