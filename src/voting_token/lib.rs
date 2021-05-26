@@ -5,13 +5,14 @@ use ic_cdk::api::time;
 use ic_cdk::caller;
 use ic_cdk::export::candid::{Nat, Principal};
 use ic_cdk_macros::{init, query, update};
+use ic_logger::log_fn;
 use std::collections::HashMap;
 
 static mut TOKEN: Option<VotingToken> = None;
 
 #[init]
 fn init() {
-    ic_cdk::print(format!("{}: voting_token init()", time()));
+    log_fn("voting_token", "init");
 
     unsafe {
         TOKEN = Some(VotingToken {
@@ -23,14 +24,14 @@ fn init() {
 
 #[query]
 fn balance_of(token_holder: Principal, timestamp: Option<i64>) -> Nat {
-    ic_cdk::print(format!("{}: voting_token balance_of()", time()));
+    log_fn("voting_token", "balance_of");
 
     unsafe { TOKEN.as_mut().unwrap().balance_of(&token_holder, timestamp) }
 }
 
 #[update]
 fn mint(to: Principal, quantity: Nat) -> Option<Error> {
-    ic_cdk::print(format!("{}: voting_token mint()", time()));
+    log_fn("voting_token", "mint");
 
     unsafe {
         // TODO: add access control
@@ -42,7 +43,7 @@ fn mint(to: Principal, quantity: Nat) -> Option<Error> {
 
 #[update]
 fn send(to: Principal, quantity: Nat) -> Option<Error> {
-    ic_cdk::print(format!("{}: voting_token send()", time()));
+    log_fn("voting_token", "send");
 
     unsafe {
         TOKEN
@@ -54,7 +55,7 @@ fn send(to: Principal, quantity: Nat) -> Option<Error> {
 
 #[update]
 fn burn(quantity: Nat) -> Option<Error> {
-    ic_cdk::print(format!("{}: voting_token burn()", time()));
+    log_fn("voting_token", "burn");
 
     unsafe { TOKEN.as_mut().unwrap().burn(&caller(), &quantity, time()) }
 }

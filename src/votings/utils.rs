@@ -1,195 +1,211 @@
+use fraction::DynaDecimal;
 use ic_cdk::export::candid::{CandidType, Deserialize, Nat, Principal};
-use ic_cdk::trap;
 use std::collections::HashMap;
 
-#[derive(Clone, Debug, Default, CandidType, Deserialize)]
-pub struct VotingToken {
-    pub name: String,
-    pub balances: HashMap<Principal, VotingTokenHistory>,
+#[derive(Clone, Debug, CandidType, Deserialize, PartialOrd, PartialEq)]
+pub enum VotingStatus {
+    Created,
+    Started,
+    Executed,
 }
 
-#[derive(Clone, Debug, Default, CandidType, Deserialize)]
-pub struct BalanceEntry {
-    pub timestamp: i64,
-    pub balance: Nat,
+#[derive(Clone, Debug, CandidType, Deserialize, PartialOrd, PartialEq)]
+pub enum Vote {
+    For,
+    Against,
+    Abstain,
 }
 
-pub type VotingTokenHistory = Vec<BalanceEntry>;
-
-fn lookup_history(
-    history: &VotingTokenHistory,
-    begin: usize,
-    end: usize,
-    timestamp: i64,
-) -> Option<usize> {
-    let mid_left = begin + (end - begin) / 2;
-    let mid_right = mid_left + 1;
-
-    let left_timestamp = history.get(mid_left).unwrap().timestamp;
-    let right_timestamp = history.get(mid_right).unwrap().timestamp;
-
-    // if we're in between (left is lower, right is higher) or if we found exact value - return its index
-    if left_timestamp <= timestamp && right_timestamp > timestamp {
-        return Some(mid_left);
-    }
-
-    if right_timestamp == timestamp {
-        return Some(mid_right);
-    }
-
-    // if we're higher than both left and right, repeat for the left side
-    if left_timestamp < timestamp && right_timestamp < timestamp {
-        return lookup_history(history, mid_right, end, timestamp);
-    }
-
-    // if we're lower than both left and right, repeat for the right side
-    if left_timestamp > timestamp && right_timestamp > timestamp {
-        return lookup_history(history, begin, mid_left, timestamp);
-    }
-
-    // it is impossible, because we've checked boundaries before
-    None
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct VotingPayloadEntry {
+    pub canister_id: Principal,
+    pub method_name: String,
+    pub args: String,
+    pub payment: i64,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum Error {
-    InsufficientBalance,
-    AccessDenied,
+    VotingAlreadyFinished,
+    VotingIsNotYetFinished,
+    VotingAlreadyStarted,
+    VotingThresholdError,
+    VotingThresholdNotPassed,
+    VotingAlreadyExecuted,
+    CallerIsNotCreator,
+    ArgsAreNotValid,
+    PayloadEntryFailed(usize),
 }
 
-pub trait IVotingToken {
-    fn mint(&mut self, to: &Principal, quantity: &Nat, timestamp: i64);
-    fn send(
-        &mut self,
-        from: &Principal,
-        to: &Principal,
-        quantity: &Nat,
-        timestamp: i64,
-    ) -> Option<Error>;
-    fn burn(&mut self, from: &Principal, quantity: &Nat, timestamp: i64) -> Option<Error>;
-    fn balance_of(&self, token_holder: &Principal, timestamp: Option<i64>) -> Nat;
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct Voting {
+    pub used_token_id: Nat,
+    pub used_token_total_supply: Nat,
+    pub creator: Principal,
+    pub status: VotingStatus,
+    pub created_at: i64,
+    pub updated_at: i64,
+    pub duration: i64,
+    pub title: String,
+    pub description: String,
+    pub payload: Vec<VotingPayloadEntry>,
+    pub voters_for: HashMap<Principal, i64>,
+    pub votes_for: Nat,
+    pub voters_against: HashMap<Principal, i64>,
+    pub votes_against: Nat,
 }
 
-impl VotingToken {
-    fn peek_balance(&self, token_holder: &Principal) -> Nat {
-        match self.balances.get(token_holder) {
-            None => Nat::from(0),
-            Some(h) => match h.last() {
-                None => Nat::from(0),
-                Some(b) => b.balance.clone(),
-            },
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct NewVotingParams {
+    pub used_token_id: Nat,
+    pub used_token_total_supply: Nat,
+    pub creator: Principal,
+    pub duration: i64,
+    pub title: String,
+    pub description: String,
+    pub payload: Vec<VotingPayloadEntry>,
+    pub timestamp: i64,
+}
+
+impl Voting {
+    // TODO: duration_sec
+    pub fn new(params: NewVotingParams) -> Voting {
+        Voting {
+            used_token_id: params.used_token_id,
+            used_token_total_supply: params.used_token_total_supply,
+            creator: params.creator,
+            status: VotingStatus::Created,
+            created_at: params.timestamp,
+            updated_at: params.timestamp,
+            duration: params.duration,
+            title: params.title,
+            description: params.description,
+            payload: params.payload,
+            voters_for: HashMap::new(),
+            votes_for: Nat::from(0),
+            voters_against: HashMap::new(),
+            votes_against: Nat::from(0),
         }
     }
 
-    fn push_balance(&mut self, token_holder: &Principal, entry: BalanceEntry) {
-        match self.balances.get_mut(token_holder) {
-            None => {
-                let mut history = VotingTokenHistory::new();
-                history.push(entry);
-
-                self.balances.insert(token_holder.clone(), history);
-            }
-            Some(h) => h.push(entry),
-        };
-    }
-
-    fn lookup_balance(&self, token_holder: &Principal, timestamp: i64) -> Option<Nat> {
-        match self.balances.get(token_holder) {
-            // if there is no history for account - it's balance is 0
-            None => Some(Nat::from(0)),
-
-            Some(history) => match history.first() {
-                None => Some(Nat::from(0)),
-                Some(f) => {
-                    // if the timestamp is earlier than the first balance snapshot - it's balance is 0
-                    if timestamp < f.timestamp {
-                        return Some(Nat::from(0));
-                    }
-
-                    match history.last() {
-                        None => Some(Nat::from(0)),
-                        Some(l) => {
-                            // if the timestamp is more recent than the last balance snapshot - it's balance is the last balance
-                            if timestamp >= l.timestamp {
-                                return Some(l.balance.clone());
-                            }
-
-                            // otherwise - binary search based lookup
-                            let idx = lookup_history(history, 0, history.len(), timestamp);
-                            idx.map(|i| history.get(i).unwrap().balance.clone())
-                        }
-                    }
-                }
-            },
-        }
-    }
-}
-
-impl IVotingToken for VotingToken {
-    fn mint(&mut self, to: &Principal, quantity: &Nat, timestamp: i64) {
-        let prev_balance = self.peek_balance(to);
-
-        let new_balance = BalanceEntry {
-            timestamp,
-            balance: prev_balance + quantity.clone(),
-        };
-
-        self.push_balance(to, new_balance);
-    }
-
-    fn send(
+    // TODO: access control for a voting_token
+    pub fn vote(
         &mut self,
-        from: &Principal,
-        to: &Principal,
-        quantity: &Nat,
+        voter: &Principal,
+        voting_power: Nat,
+        vote: Vote,
+        threshold: f32,
         timestamp: i64,
     ) -> Option<Error> {
-        let latest_balance_from = self.peek_balance(from);
-        let latest_balance_to = self.peek_balance(to);
-
-        if latest_balance_from < quantity.clone() {
-            return Some(Error::InsufficientBalance);
+        if self.updated_at + self.duration < timestamp {
+            return Some(Error::VotingAlreadyFinished);
         }
 
-        let new_balance_from = BalanceEntry {
-            timestamp,
-            balance: latest_balance_from - quantity.clone(),
-        };
-        let new_balance_to = BalanceEntry {
-            timestamp,
-            balance: latest_balance_to + quantity.clone(),
+        self.remove_prev_vote(voter, &voting_power);
+
+        match vote {
+            Vote::Abstain => (),
+            Vote::For => {
+                self.votes_for += voting_power;
+                self.voters_for.insert(voter.clone(), timestamp);
+            }
+            Vote::Against => {
+                self.votes_against += voting_power;
+                self.voters_against.insert(voter.clone(), timestamp);
+            }
         };
 
-        self.push_balance(from, new_balance_from);
-        self.push_balance(to, new_balance_to);
+        if self.status == VotingStatus::Created
+            && is_passing_threshold(
+                self.votes_for.clone() + self.votes_against.clone(),
+                self.used_token_total_supply.clone(),
+                threshold,
+            )
+        {
+            self.status = VotingStatus::Started;
+        }
 
         None
     }
 
-    fn burn(&mut self, from: &Principal, quantity: &Nat, timestamp: i64) -> Option<Error> {
-        let latest_balance = self.peek_balance(from);
+    pub fn execute(&mut self, timestamp: i64) -> Option<Error> {
+        //if self.updated_at + self.duration >= timestamp {
+        //    return Some(Error::VotingIsNotYetFinished);
+        //}
 
-        if latest_balance < quantity.clone() {
-            return Some(Error::InsufficientBalance);
+        if self.status == VotingStatus::Created {
+            return Some(Error::VotingThresholdNotPassed);
         }
 
-        let new_balance = BalanceEntry {
-            timestamp,
-            balance: latest_balance - quantity.clone(),
-        };
+        if self.status == VotingStatus::Executed {
+            return Some(Error::VotingAlreadyExecuted);
+        }
 
-        self.push_balance(from, new_balance);
+        self.status = VotingStatus::Executed;
+        None
+    }
+
+    pub fn update(
+        &mut self,
+        duration: Option<i64>,
+        title: Option<String>,
+        description: Option<String>,
+        payload: Option<Vec<VotingPayloadEntry>>,
+        timestamp: i64,
+        caller: Principal,
+    ) -> Option<Error> {
+        if self.status != VotingStatus::Created {
+            return Some(Error::VotingAlreadyStarted);
+        }
+
+        if caller != self.creator {
+            return Some(Error::CallerIsNotCreator);
+        }
+
+        if let Some(d) = duration {
+            self.duration = d;
+        }
+
+        if let Some(t) = title {
+            self.title = t;
+        }
+
+        if let Some(d) = description {
+            self.description = d;
+        }
+
+        if let Some(p) = payload {
+            self.payload = p;
+        }
+
+        self.updated_at = timestamp;
 
         None
     }
 
-    fn balance_of(&self, token_holder: &Principal, timestamp: Option<i64>) -> Nat {
-        match timestamp {
-            None => self.peek_balance(token_holder),
-            Some(t) => match self.lookup_balance(token_holder, t) {
-                None => trap("Balance history lookup failed due to internal error"),
-                Some(b) => b,
-            },
+    fn remove_prev_vote(&mut self, voter: &Principal, voting_power: &Nat) {
+        let vote_for = self.voters_for.get(voter);
+        if vote_for.is_some() {
+            self.voters_for.remove(voter);
+            self.votes_for -= voting_power.clone();
+
+            return;
+        }
+
+        let vote_against = self.voters_against.get(voter);
+        if vote_against.is_some() {
+            self.voters_against.remove(voter);
+            self.votes_against -= voting_power.clone();
         }
     }
+}
+
+fn is_passing_threshold(small: Nat, big: Nat, threshold: f32) -> bool {
+    type D = DynaDecimal<usize, u8>;
+
+    let num = D::from(small.0.to_string().as_str());
+    let deno = D::from(big.0.to_string().as_str());
+    let thresh = D::from(threshold.to_string().as_str());
+
+    num / deno >= thresh
 }

@@ -1,1 +1,22 @@
+type Error = variant {
+    VotingAlreadyFinished;
+    VotingIsNotYetFinished;
+    VotingAlreadyStarted;
+    VotingThresholdError;
+    VotingThresholdNotPassed;
+    VotingAlreadyExecuted;
+    CallerIsNotCreator;
+    ArgsAreNotValid;
+    PayloadEntryFailed: nat32;
+};
 
+type Vote = variant {
+    For;
+    Against;
+    Abstain;
+};
+
+service : {
+    "do_vote": (nat, Vote) -> (opt Error);
+    "execute": () -> (opt Error);
+}

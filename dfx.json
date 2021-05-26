@@ -1,15 +1,15 @@
 {
   "canisters": {
     "voting_token": {
-      "build": "cargo build --target wasm32-unknown-unknown --package voting_token --release",
+      "build": "./build-voting_token.sh",
       "candid": "src/voting_token/voting_token.did",
-      "wasm": "target/wasm32-unknown-unknown/release/voting_token.wasm",
+      "wasm": "target/wasm32-unknown-unknown/release/voting_token-opt.wasm",
       "type": "custom"
     },
     "votings": {
-      "build": "cargo build --target wasm32-unknown-unknown --package votings --release",
+      "build": "./build-votings.sh",
       "candid": "src/votings/votings.did",
-      "wasm": "target/wasm32-unknown-unknown/release/votings.wasm",
+      "wasm": "target/wasm32-unknown-unknown/release/votings-opt.wasm",
       "type": "custom"
     }
   },
