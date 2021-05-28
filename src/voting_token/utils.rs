@@ -57,20 +57,74 @@ pub enum Error {
     AccessDenied,
 }
 
-pub trait IVotingToken {
-    fn mint(&mut self, to: &Principal, quantity: &Nat, timestamp: i64);
-    fn send(
+impl VotingToken {
+    pub fn mint(&mut self, to: &Principal, quantity: &Nat, timestamp: i64) {
+        let prev_balance = self.peek_balance(to);
+
+        let new_balance = BalanceEntry {
+            timestamp,
+            balance: prev_balance + quantity.clone(),
+        };
+
+        self.push_balance(to, new_balance);
+    }
+
+    pub fn send(
         &mut self,
         from: &Principal,
         to: &Principal,
         quantity: &Nat,
         timestamp: i64,
-    ) -> Option<Error>;
-    fn burn(&mut self, from: &Principal, quantity: &Nat, timestamp: i64) -> Option<Error>;
-    fn balance_of(&self, token_holder: &Principal, timestamp: Option<i64>) -> Nat;
-}
+    ) -> Result<(), Error> {
+        let latest_balance_from = self.peek_balance(from);
+        let latest_balance_to = self.peek_balance(to);
 
-impl VotingToken {
+        if latest_balance_from < quantity.clone() {
+            return Err(Error::InsufficientBalance);
+        }
+
+        let new_balance_from = BalanceEntry {
+            timestamp,
+            balance: latest_balance_from - quantity.clone(),
+        };
+        let new_balance_to = BalanceEntry {
+            timestamp,
+            balance: latest_balance_to + quantity.clone(),
+        };
+
+        self.push_balance(from, new_balance_from);
+        self.push_balance(to, new_balance_to);
+
+        Ok(())
+    }
+
+    pub fn burn(&mut self, from: &Principal, quantity: &Nat, timestamp: i64) -> Result<(), Error> {
+        let latest_balance = self.peek_balance(from);
+
+        if latest_balance < quantity.clone() {
+            return Err(Error::InsufficientBalance);
+        }
+
+        let new_balance = BalanceEntry {
+            timestamp,
+            balance: latest_balance - quantity.clone(),
+        };
+
+        self.push_balance(from, new_balance);
+
+        Ok(())
+    }
+
+    pub fn balance_of(&self, token_holder: &Principal, timestamp: Option<i64>) -> Nat {
+        match timestamp {
+            None => self.peek_balance(token_holder),
+            Some(t) => match self.lookup_balance(token_holder, t) {
+                None => trap("Balance history lookup failed due to internal error"),
+                Some(b) => b,
+            },
+        }
+    }
+
     fn peek_balance(&self, token_holder: &Principal) -> Nat {
         match self.balances.get(token_holder) {
             None => Nat::from(0),
@@ -120,75 +174,6 @@ impl VotingToken {
                         }
                     }
                 }
-            },
-        }
-    }
-}
-
-impl IVotingToken for VotingToken {
-    fn mint(&mut self, to: &Principal, quantity: &Nat, timestamp: i64) {
-        let prev_balance = self.peek_balance(to);
-
-        let new_balance = BalanceEntry {
-            timestamp,
-            balance: prev_balance + quantity.clone(),
-        };
-
-        self.push_balance(to, new_balance);
-    }
-
-    fn send(
-        &mut self,
-        from: &Principal,
-        to: &Principal,
-        quantity: &Nat,
-        timestamp: i64,
-    ) -> Option<Error> {
-        let latest_balance_from = self.peek_balance(from);
-        let latest_balance_to = self.peek_balance(to);
-
-        if latest_balance_from < quantity.clone() {
-            return Some(Error::InsufficientBalance);
-        }
-
-        let new_balance_from = BalanceEntry {
-            timestamp,
-            balance: latest_balance_from - quantity.clone(),
-        };
-        let new_balance_to = BalanceEntry {
-            timestamp,
-            balance: latest_balance_to + quantity.clone(),
-        };
-
-        self.push_balance(from, new_balance_from);
-        self.push_balance(to, new_balance_to);
-
-        None
-    }
-
-    fn burn(&mut self, from: &Principal, quantity: &Nat, timestamp: i64) -> Option<Error> {
-        let latest_balance = self.peek_balance(from);
-
-        if latest_balance < quantity.clone() {
-            return Some(Error::InsufficientBalance);
-        }
-
-        let new_balance = BalanceEntry {
-            timestamp,
-            balance: latest_balance - quantity.clone(),
-        };
-
-        self.push_balance(from, new_balance);
-
-        None
-    }
-
-    fn balance_of(&self, token_holder: &Principal, timestamp: Option<i64>) -> Nat {
-        match timestamp {
-            None => self.peek_balance(token_holder),
-            Some(t) => match self.lookup_balance(token_holder, t) {
-                None => trap("Balance history lookup failed due to internal error"),
-                Some(b) => b,
             },
         }
     }

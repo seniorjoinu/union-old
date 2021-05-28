@@ -1,4 +1,5 @@
 use fraction::DynaDecimal;
+use ic_cdk::api::call::RejectionCode;
 use ic_cdk::export::candid::{CandidType, Deserialize, Nat, Principal};
 use std::collections::HashMap;
 
@@ -34,7 +35,7 @@ pub enum Error {
     VotingAlreadyExecuted,
     CallerIsNotCreator,
     ArgsAreNotValid,
-    PayloadEntryFailed(usize),
+    PayloadEntryFailed(String),
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -48,7 +49,7 @@ pub struct Voting {
     pub duration: i64,
     pub title: String,
     pub description: String,
-    pub payload: Vec<VotingPayloadEntry>,
+    pub payload: Option<VotingPayloadEntry>,
     pub voters_for: HashMap<Principal, i64>,
     pub votes_for: Nat,
     pub voters_against: HashMap<Principal, i64>,
@@ -63,7 +64,7 @@ pub struct NewVotingParams {
     pub duration: i64,
     pub title: String,
     pub description: String,
-    pub payload: Vec<VotingPayloadEntry>,
+    pub payload: Option<VotingPayloadEntry>,
     pub timestamp: i64,
 }
 
@@ -96,9 +97,9 @@ impl Voting {
         vote: Vote,
         threshold: f32,
         timestamp: i64,
-    ) -> Option<Error> {
+    ) -> Result<(), Error> {
         if self.updated_at + self.duration < timestamp {
-            return Some(Error::VotingAlreadyFinished);
+            return Err(Error::VotingAlreadyFinished);
         }
 
         self.remove_prev_vote(voter, &voting_power);
@@ -125,24 +126,25 @@ impl Voting {
             self.status = VotingStatus::Started;
         }
 
-        None
+        Ok(())
     }
 
-    pub fn execute(&mut self, timestamp: i64) -> Option<Error> {
+    pub fn execute(&mut self, timestamp: i64) -> Result<(), Error> {
         //if self.updated_at + self.duration >= timestamp {
         //    return Some(Error::VotingIsNotYetFinished);
         //}
 
         if self.status == VotingStatus::Created {
-            return Some(Error::VotingThresholdNotPassed);
+            return Err(Error::VotingThresholdNotPassed);
         }
 
         if self.status == VotingStatus::Executed {
-            return Some(Error::VotingAlreadyExecuted);
+            return Err(Error::VotingAlreadyExecuted);
         }
 
         self.status = VotingStatus::Executed;
-        None
+
+        Ok(())
     }
 
     pub fn update(
@@ -150,16 +152,16 @@ impl Voting {
         duration: Option<i64>,
         title: Option<String>,
         description: Option<String>,
-        payload: Option<Vec<VotingPayloadEntry>>,
+        payload: Option<Option<VotingPayloadEntry>>,
         timestamp: i64,
         caller: Principal,
-    ) -> Option<Error> {
+    ) -> Result<(), Error> {
         if self.status != VotingStatus::Created {
-            return Some(Error::VotingAlreadyStarted);
+            return Err(Error::VotingAlreadyStarted);
         }
 
         if caller != self.creator {
-            return Some(Error::CallerIsNotCreator);
+            return Err(Error::CallerIsNotCreator);
         }
 
         if let Some(d) = duration {
@@ -180,7 +182,7 @@ impl Voting {
 
         self.updated_at = timestamp;
 
-        None
+        Ok(())
     }
 
     fn remove_prev_vote(&mut self, voter: &Principal, voting_power: &Nat) {

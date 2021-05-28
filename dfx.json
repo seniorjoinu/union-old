@@ -3,13 +3,13 @@
     "voting_token": {
       "build": "./build-voting_token.sh",
       "candid": "src/voting_token/voting_token.did",
-      "wasm": "target/wasm32-unknown-unknown/release/voting_token-opt.wasm",
+      "wasm": "target/wasm32-unknown-unknown/debug/voting_token-opt.wasm",
       "type": "custom"
     },
     "votings": {
       "build": "./build-votings.sh",
       "candid": "src/votings/votings.did",
-      "wasm": "target/wasm32-unknown-unknown/release/votings-opt.wasm",
+      "wasm": "target/wasm32-unknown-unknown/debug/votings-opt.wasm",
       "type": "custom"
     }
   },

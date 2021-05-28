@@ -7,7 +7,7 @@ type Error = variant {
     VotingAlreadyExecuted;
     CallerIsNotCreator;
     ArgsAreNotValid;
-    PayloadEntryFailed: nat32;
+    PayloadEntryFailed: text;
 };
 
 type Vote = variant {
@@ -17,6 +17,6 @@ type Vote = variant {
 };
 
 service : {
-    "do_vote": (nat, Vote) -> (opt Error);
-    "execute": () -> (opt Error);
+    "do_vote": (nat, Vote) -> (variant { Ok; Err: Error });
+    "execute": () -> (variant { Ok: blob; Err: Error });
 }

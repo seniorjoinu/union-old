@@ -1,6 +1,6 @@
 mod utils;
 
-use crate::utils::{Error, IVotingToken, VotingToken};
+use crate::utils::{Error, VotingToken};
 use ic_cdk::api::time;
 use ic_cdk::caller;
 use ic_cdk::export::candid::{Nat, Principal};
@@ -30,19 +30,19 @@ fn balance_of(token_holder: Principal, timestamp: Option<i64>) -> Nat {
 }
 
 #[update]
-fn mint(to: Principal, quantity: Nat) -> Option<Error> {
+fn mint(to: Principal, quantity: Nat) -> Result<(), Error> {
     log_fn("voting_token", "mint");
 
     unsafe {
         // TODO: add access control
         TOKEN.as_mut().unwrap().mint(&to, &quantity, time());
 
-        None
+        Ok(())
     }
 }
 
 #[update]
-fn send(to: Principal, quantity: Nat) -> Option<Error> {
+fn send(to: Principal, quantity: Nat) -> Result<(), Error> {
     log_fn("voting_token", "send");
 
     unsafe {
@@ -54,7 +54,7 @@ fn send(to: Principal, quantity: Nat) -> Option<Error> {
 }
 
 #[update]
-fn burn(quantity: Nat) -> Option<Error> {
+fn burn(quantity: Nat) -> Result<(), Error> {
     log_fn("voting_token", "burn");
 
     unsafe { TOKEN.as_mut().unwrap().burn(&caller(), &quantity, time()) }
