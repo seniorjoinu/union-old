@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "src/ic-logger",
+    "src/union-utils",
     "src/voting_token",
     "src/votings"
 ]

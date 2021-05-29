@@ -149,7 +149,7 @@ dependencies = [
  "lalrpop-util",
  "leb128",
  "logos",
- "num-bigint 0.3.2",
+ "num-bigint",
  "num-traits",
  "num_enum",
  "paste",
@@ -176,7 +176,7 @@ dependencies = [
  "lalrpop-util",
  "leb128",
  "logos",
- "num-bigint 0.3.2",
+ "num-bigint",
  "num-traits",
  "num_enum",
  "paste",
@@ -339,16 +339,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
-name = "fraction"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78d24d088325f939faaf806483fbfac0548e43018606bfe7a44abc83f6dc75ea"
-dependencies = [
- "lazy_static",
- "num",
-]
-
-[[package]]
 name = "generic-array"
 version = "0.14.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -415,14 +405,6 @@ dependencies = [
  "serde",
  "serde_tokenstream",
  "syn",
-]
-
-[[package]]
-name = "ic-logger"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "ic-cdk",
 ]
 
 [[package]]
@@ -503,9 +485,9 @@ checksum = "3576a87f2ba00f6f106fdfcd16db1d698d648a26ad8e0573cad8537c3c362d2a"
 
 [[package]]
 name = "libc"
-version = "0.2.94"
+version = "0.2.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18794a8ad5b29321f790b55d93dfba91e125cb1a9edbd4f8e3150acc771c1a5e"
+checksum = "789da6d93f1b866ffe175afc5322a4d76c038605a1c3319bb57b06967ca98a36"
 
 [[package]]
 name = "log"
@@ -553,31 +535,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4a24736216ec316047a1fc4252e27dabb04218aa4a3f37c6e7ddbf1f9782b54"
 
 [[package]]
-name = "num"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8536030f9fea7127f841b45bb6243b27255787fb4eb83958aa1ef9d2fdc0c36"
-dependencies = [
- "num-bigint 0.2.6",
- "num-complex",
- "num-integer",
- "num-iter",
- "num-rational",
- "num-traits",
-]
-
-[[package]]
-name = "num-bigint"
-version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "090c7f9998ee0ff65aa5b723e4009f7b217707f1fb5ea551329cc4d6231fb304"
-dependencies = [
- "autocfg",
- "num-integer",
- "num-traits",
-]
-
-[[package]]
 name = "num-bigint"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -589,45 +546,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "num-complex"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6b19411a9719e753aff12e5187b74d60d3dc449ec3f4dc21e3989c3f554bc95"
-dependencies = [
- "autocfg",
- "num-traits",
-]
-
-[[package]]
 name = "num-integer"
 version = "0.1.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2cc698a63b549a70bc047073d2949cce27cd1c7b0a4a862d08a8031bc2801db"
 dependencies = [
  "autocfg",
- "num-traits",
-]
-
-[[package]]
-name = "num-iter"
-version = "0.1.42"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2021c8337a54d21aca0d59a92577a029af9431cb59b909b03252b9c164fad59"
-dependencies = [
- "autocfg",
- "num-integer",
- "num-traits",
-]
-
-[[package]]
-name = "num-rational"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c000134b5dbf44adc5cb772486d335293351644b801551abe8f75c84cfa4aef"
-dependencies = [
- "autocfg",
- "num-bigint 0.2.6",
- "num-integer",
  "num-traits",
 ]
 
@@ -964,6 +888,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
 
 [[package]]
+name = "union-utils"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "ic-cdk",
+ "serde",
+]
+
+[[package]]
 name = "utf8-ranges"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -981,8 +914,8 @@ version = "0.1.0"
 dependencies = [
  "ic-cdk",
  "ic-cdk-macros",
- "ic-logger",
  "serde",
+ "union-utils",
 ]
 
 [[package]]
@@ -990,11 +923,10 @@ name = "votings"
 version = "0.1.0"
 dependencies = [
  "candid 0.7.0-beta.1",
- "fraction",
  "ic-cdk",
  "ic-cdk-macros",
- "ic-logger",
  "serde",
+ "union-utils",
 ]
 
 [[package]]

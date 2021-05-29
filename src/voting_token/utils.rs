@@ -11,7 +11,7 @@ pub struct VotingToken {
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct BalanceEntry {
     pub timestamp: i64,
-    pub balance: Nat,
+    pub balance: u64,
 }
 
 pub type VotingTokenHistory = Vec<BalanceEntry>;
@@ -58,7 +58,7 @@ pub enum Error {
 }
 
 impl VotingToken {
-    pub fn mint(&mut self, to: &Principal, quantity: &Nat, timestamp: i64) {
+    pub fn mint(&mut self, to: &Principal, quantity: u64, timestamp: i64) {
         let prev_balance = self.peek_balance(to);
 
         let new_balance = BalanceEntry {
@@ -73,23 +73,23 @@ impl VotingToken {
         &mut self,
         from: &Principal,
         to: &Principal,
-        quantity: &Nat,
+        quantity: u64,
         timestamp: i64,
     ) -> Result<(), Error> {
         let latest_balance_from = self.peek_balance(from);
         let latest_balance_to = self.peek_balance(to);
 
-        if latest_balance_from < quantity.clone() {
+        if latest_balance_from < quantity {
             return Err(Error::InsufficientBalance);
         }
 
         let new_balance_from = BalanceEntry {
             timestamp,
-            balance: latest_balance_from - quantity.clone(),
+            balance: latest_balance_from - quantity,
         };
         let new_balance_to = BalanceEntry {
             timestamp,
-            balance: latest_balance_to + quantity.clone(),
+            balance: latest_balance_to + quantity,
         };
 
         self.push_balance(from, new_balance_from);
@@ -98,16 +98,16 @@ impl VotingToken {
         Ok(())
     }
 
-    pub fn burn(&mut self, from: &Principal, quantity: &Nat, timestamp: i64) -> Result<(), Error> {
+    pub fn burn(&mut self, from: &Principal, quantity: u64, timestamp: i64) -> Result<(), Error> {
         let latest_balance = self.peek_balance(from);
 
-        if latest_balance < quantity.clone() {
+        if latest_balance < quantity {
             return Err(Error::InsufficientBalance);
         }
 
         let new_balance = BalanceEntry {
             timestamp,
-            balance: latest_balance - quantity.clone(),
+            balance: latest_balance - quantity,
         };
 
         self.push_balance(from, new_balance);
@@ -115,7 +115,7 @@ impl VotingToken {
         Ok(())
     }
 
-    pub fn balance_of(&self, token_holder: &Principal, timestamp: Option<i64>) -> Nat {
+    pub fn balance_of(&self, token_holder: &Principal, timestamp: Option<i64>) -> u64 {
         match timestamp {
             None => self.peek_balance(token_holder),
             Some(t) => match self.lookup_balance(token_holder, t) {
@@ -125,12 +125,12 @@ impl VotingToken {
         }
     }
 
-    fn peek_balance(&self, token_holder: &Principal) -> Nat {
+    fn peek_balance(&self, token_holder: &Principal) -> u64 {
         match self.balances.get(token_holder) {
-            None => Nat::from(0),
+            None => 0,
             Some(h) => match h.last() {
-                None => Nat::from(0),
-                Some(b) => b.balance.clone(),
+                None => 0,
+                Some(b) => b.balance,
             },
         }
     }
@@ -147,21 +147,21 @@ impl VotingToken {
         };
     }
 
-    fn lookup_balance(&self, token_holder: &Principal, timestamp: i64) -> Option<Nat> {
+    fn lookup_balance(&self, token_holder: &Principal, timestamp: i64) -> Option<u64> {
         match self.balances.get(token_holder) {
             // if there is no history for account - it's balance is 0
-            None => Some(Nat::from(0)),
+            None => Some(0),
 
             Some(history) => match history.first() {
-                None => Some(Nat::from(0)),
+                None => Some(0),
                 Some(f) => {
                     // if the timestamp is earlier than the first balance snapshot - it's balance is 0
                     if timestamp < f.timestamp {
-                        return Some(Nat::from(0));
+                        return Some(0);
                     }
 
                     match history.last() {
-                        None => Some(Nat::from(0)),
+                        None => Some(0),
                         Some(l) => {
                             // if the timestamp is more recent than the last balance snapshot - it's balance is the last balance
                             if timestamp >= l.timestamp {

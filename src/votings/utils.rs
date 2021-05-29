@@ -2,6 +2,7 @@ use fraction::DynaDecimal;
 use ic_cdk::api::call::RejectionCode;
 use ic_cdk::export::candid::{CandidType, Deserialize, Nat, Principal};
 use std::collections::HashMap;
+use union_utils::{RemoteCallError, RemoteCallPayload};
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialOrd, PartialEq)]
 pub enum VotingStatus {
@@ -18,14 +19,6 @@ pub enum Vote {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct VotingPayloadEntry {
-    pub canister_id: Principal,
-    pub method_name: String,
-    pub args: String,
-    pub payment: i64,
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum Error {
     VotingAlreadyFinished,
     VotingIsNotYetFinished,
@@ -34,14 +27,11 @@ pub enum Error {
     VotingThresholdNotPassed,
     VotingAlreadyExecuted,
     CallerIsNotCreator,
-    ArgsAreNotValid,
-    PayloadEntryFailed(String),
+    VotingExecutionError(RemoteCallError),
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Voting {
-    pub used_token_id: Nat,
-    pub used_token_total_supply: Nat,
     pub creator: Principal,
     pub status: VotingStatus,
     pub created_at: i64,
@@ -49,22 +39,20 @@ pub struct Voting {
     pub duration: i64,
     pub title: String,
     pub description: String,
-    pub payload: Option<VotingPayloadEntry>,
+    pub payload: Option<RemoteCallPayload>,
     pub voters_for: HashMap<Principal, i64>,
-    pub votes_for: Nat,
+    pub voting_power_for: u64,
     pub voters_against: HashMap<Principal, i64>,
-    pub votes_against: Nat,
+    pub voting_power_against: u64,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct NewVotingParams {
-    pub used_token_id: Nat,
-    pub used_token_total_supply: Nat,
     pub creator: Principal,
     pub duration: i64,
     pub title: String,
     pub description: String,
-    pub payload: Option<VotingPayloadEntry>,
+    pub payload: Option<RemoteCallPayload>,
     pub timestamp: i64,
 }
 
@@ -72,8 +60,6 @@ impl Voting {
     // TODO: duration_sec
     pub fn new(params: NewVotingParams) -> Voting {
         Voting {
-            used_token_id: params.used_token_id,
-            used_token_total_supply: params.used_token_total_supply,
             creator: params.creator,
             status: VotingStatus::Created,
             created_at: params.timestamp,
@@ -83,9 +69,9 @@ impl Voting {
             description: params.description,
             payload: params.payload,
             voters_for: HashMap::new(),
-            votes_for: Nat::from(0),
+            voting_power_for: 0,
             voters_against: HashMap::new(),
-            votes_against: Nat::from(0),
+            voting_power_against: 0,
         }
     }
 
@@ -93,36 +79,30 @@ impl Voting {
     pub fn vote(
         &mut self,
         voter: &Principal,
-        voting_power: Nat,
+        voting_power: u64,
         vote: Vote,
-        threshold: f32,
+        threshold: f64,
         timestamp: i64,
     ) -> Result<(), Error> {
         if self.updated_at + self.duration < timestamp {
             return Err(Error::VotingAlreadyFinished);
         }
 
-        self.remove_prev_vote(voter, &voting_power);
+        self.remove_prev_vote(voter, voting_power);
 
         match vote {
             Vote::Abstain => (),
             Vote::For => {
-                self.votes_for += voting_power;
+                self.voting_power_for += voting_power;
                 self.voters_for.insert(voter.clone(), timestamp);
             }
             Vote::Against => {
-                self.votes_against += voting_power;
+                self.voting_power_against += voting_power;
                 self.voters_against.insert(voter.clone(), timestamp);
             }
         };
 
-        if self.status == VotingStatus::Created
-            && is_passing_threshold(
-                self.votes_for.clone() + self.votes_against.clone(),
-                self.used_token_total_supply.clone(),
-                threshold,
-            )
-        {
+        if self.status == VotingStatus::Created && is_passing_threshold(self, threshold) {
             self.status = VotingStatus::Started;
         }
 
@@ -152,7 +132,7 @@ impl Voting {
         duration: Option<i64>,
         title: Option<String>,
         description: Option<String>,
-        payload: Option<Option<VotingPayloadEntry>>,
+        payload: Option<Option<RemoteCallPayload>>,
         timestamp: i64,
         caller: Principal,
     ) -> Result<(), Error> {
@@ -185,11 +165,11 @@ impl Voting {
         Ok(())
     }
 
-    fn remove_prev_vote(&mut self, voter: &Principal, voting_power: &Nat) {
+    fn remove_prev_vote(&mut self, voter: &Principal, voting_power: u64) {
         let vote_for = self.voters_for.get(voter);
         if vote_for.is_some() {
             self.voters_for.remove(voter);
-            self.votes_for -= voting_power.clone();
+            self.voting_power_for -= voting_power;
 
             return;
         }
@@ -197,17 +177,11 @@ impl Voting {
         let vote_against = self.voters_against.get(voter);
         if vote_against.is_some() {
             self.voters_against.remove(voter);
-            self.votes_against -= voting_power.clone();
+            self.voting_power_against -= voting_power;
         }
     }
 }
 
-fn is_passing_threshold(small: Nat, big: Nat, threshold: f32) -> bool {
-    type D = DynaDecimal<usize, u8>;
-
-    let num = D::from(small.0.to_string().as_str());
-    let deno = D::from(big.0.to_string().as_str());
-    let thresh = D::from(threshold.to_string().as_str());
-
-    num / deno >= thresh
+fn is_passing_threshold(voting: &Voting, threshold: f64) -> bool {
+    true
 }
