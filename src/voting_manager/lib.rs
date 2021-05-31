@@ -1,10 +1,11 @@
-use crate::utils::{Error, NewVotingParams, Vote, Voting};
 use ic_cdk::api::time;
 use ic_cdk::caller;
-use ic_cdk::export::candid::Nat;
 use ic_cdk::export::Principal;
 use ic_cdk_macros::{init, update};
-use union_utils::{log, remote_call, RemoteCallPayload};
+use union_utils::fns::{log, remote_call};
+use union_utils::types::{RemoteCallEndpoint, RemoteCallPayload};
+
+use crate::utils::{Error, NewVotingParams, Vote, Voting};
 
 mod utils;
 
@@ -21,8 +22,10 @@ fn init() {
             title: String::from("Test voting"),
             description: String::from("Test desc"),
             payload: Some(RemoteCallPayload {
-                canister_id: Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap(),
-                method_name: String::from("mint"),
+                endpoint: RemoteCallEndpoint {
+                    canister_id: Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap(),
+                    method_name: String::from("mint"),
+                },
                 idl_str_args: String::from("(principal \"rwlgt-iiaaa-aaaaa-aaaaa-cai\", 15 : nat)"),
                 payment: 0,
             }),

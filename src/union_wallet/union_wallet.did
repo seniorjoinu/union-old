@@ -1,0 +1,25 @@
+type RemoteCallEndpoint = record {
+    canister_id: principal;
+    method_name: text;
+};
+
+type RemoteCallPayload = record {
+    endpoint: RemoteCallEndpoint;
+    idl_str_args: text;
+    payment: int64;
+};
+
+type RemoteCallError = variant {
+    UnableToParseArgs;
+    UnableToSerializeArgs;
+    RemoteCallReject : text;
+};
+
+type RemoteCallResult = variant {
+    Ok : blob;
+    Err : RemoteCallError;
+};
+
+service : {
+    "_union_call" : (vec RemoteCallPayload, nat32) -> (vec RemoteCallResult);
+}

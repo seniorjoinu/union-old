@@ -1,7 +1,7 @@
 type Error = variant {
     InsufficientBalance;
     AccessDenied;
-}
+};
 
 service : {
     "balance_of": (principal, opt int64) -> (nat64) query;

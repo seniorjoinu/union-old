@@ -1,12 +1,13 @@
-mod utils;
-
-use crate::utils::{Error, VotingToken};
 use ic_cdk::api::time;
 use ic_cdk::caller;
-use ic_cdk::export::candid::{Nat, Principal};
+use ic_cdk::export::candid::Principal;
 use ic_cdk_macros::{init, query, update};
 use std::collections::HashMap;
-use union_utils::log;
+use union_utils::fns::log;
+
+use crate::utils::{Error, VotingToken};
+
+mod utils;
 
 static mut TOKEN: Option<VotingToken> = None;
 

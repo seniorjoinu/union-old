@@ -4,12 +4,21 @@
       "build": "./build-voting_token.sh",
       "candid": "src/voting_token/voting_token.did",
       "wasm": "target/wasm32-unknown-unknown/debug/voting_token-opt.wasm",
-      "type": "custom"
+      "type": "custom",
+      "dependencies": [
+        "union_wallet"
+      ]
     },
     "votings": {
-      "build": "./build-votings.sh",
-      "candid": "src/votings/votings.did",
-      "wasm": "target/wasm32-unknown-unknown/debug/votings-opt.wasm",
+      "build": "./build-voting_manager.sh",
+      "candid": "src/voting_manager/voting_manager.did",
+      "wasm": "target/wasm32-unknown-unknown/debug/voting_manager-opt.wasm",
+      "type": "custom"
+    },
+    "union_wallet": {
+      "build": "./build-union_wallet.sh",
+      "candid": "src/union_wallet/union_wallet.did",
+      "wasm": "target/wasm32-unknown-unknown/debug/union_wallet-opt.wasm",
       "type": "custom"
     }
   },

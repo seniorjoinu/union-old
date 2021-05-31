@@ -897,6 +897,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "union_project"
+version = "0.1.0"
+dependencies = [
+ "candid 0.7.0-beta.1",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "serde",
+ "union-utils",
+]
+
+[[package]]
+name = "union_wallet"
+version = "0.1.0"
+dependencies = [
+ "candid 0.7.0-beta.1",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "serde",
+ "union-utils",
+]
+
+[[package]]
 name = "utf8-ranges"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

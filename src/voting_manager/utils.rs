@@ -1,8 +1,6 @@
-use fraction::DynaDecimal;
-use ic_cdk::api::call::RejectionCode;
-use ic_cdk::export::candid::{CandidType, Deserialize, Nat, Principal};
+use ic_cdk::export::candid::{CandidType, Deserialize, Principal};
 use std::collections::HashMap;
-use union_utils::{RemoteCallError, RemoteCallPayload};
+use union_utils::types::{RemoteCallError, RemoteCallPayload};
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialOrd, PartialEq)]
 pub enum VotingStatus {
