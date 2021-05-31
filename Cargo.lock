@@ -766,6 +766,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "shares_token"
+version = "0.1.0"
+dependencies = [
+ "ic-cdk",
+ "ic-cdk-macros",
+ "serde",
+ "union_utils",
+]
+
+[[package]]
 name = "siphasher"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -924,16 +934,6 @@ name = "voting_manager"
 version = "0.1.0"
 dependencies = [
  "candid 0.7.0-beta.1",
- "ic-cdk",
- "ic-cdk-macros",
- "serde",
- "union_utils",
-]
-
-[[package]]
-name = "voting_token"
-version = "0.1.0"
-dependencies = [
  "ic-cdk",
  "ic-cdk-macros",
  "serde",

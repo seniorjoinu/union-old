@@ -2,6 +2,7 @@ use ic_cdk::api::time;
 use ic_cdk::caller;
 use ic_cdk::export::Principal;
 use ic_cdk_macros::{init, update};
+
 use union_utils::fns::{log, remote_call};
 use union_utils::types::{RemoteCallEndpoint, RemoteCallPayload};
 
@@ -64,4 +65,11 @@ async fn execute() -> Result<Option<Vec<u8>>, Error> {
     }
 
     Ok(None)
+}
+
+#[update]
+fn update() -> Result<(), Error> {
+    if caller != self.proposer {
+        return Err(Error::CallerIsNotCreator);
+    }
 }

@@ -64,3 +64,7 @@ pub fn only_by(controller_opt: Option<Principal>) {
         }
     }
 }
+
+pub fn is_passing_threshold(small: u64, big: u64, threshold: f64) -> bool {
+    small as f64 / big as f64 >= threshold
+}

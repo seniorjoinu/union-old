@@ -1,13 +1,10 @@
 {
   "canisters": {
     "voting_token": {
-      "build": "./build-voting_token.sh",
-      "candid": "src/voting_token/voting_token.did",
-      "wasm": "target/wasm32-unknown-unknown/debug/voting_token-opt.wasm",
-      "type": "custom",
-      "dependencies": [
-        "union_wallet"
-      ]
+      "build": "./build-shares_token.sh",
+      "candid": "src/shares_token/shares_token.did",
+      "wasm": "target/wasm32-unknown-unknown/debug/shares_token-opt.wasm",
+      "type": "custom"
     },
     "voting_manager": {
       "build": "./build-voting_manager.sh",
