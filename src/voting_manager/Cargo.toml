@@ -13,4 +13,4 @@ ic-cdk = "0.2.4"
 ic-cdk-macros = "0.2.4"
 serde = "1.0.126"
 candid = "0.7.0-beta.1"
-union-utils = { path = "../union-utils" }
+union_utils = { path = "../union_utils" }

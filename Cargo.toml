@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "src/union-utils",
+    "src/union_utils",
     "src/voting_token",
     "src/voting_manager",
     "src/union_wallet",

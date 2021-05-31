@@ -888,23 +888,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
 
 [[package]]
-name = "union-utils"
+name = "union_utils"
 version = "0.1.0"
 dependencies = [
  "chrono",
  "ic-cdk",
  "serde",
-]
-
-[[package]]
-name = "union_project"
-version = "0.1.0"
-dependencies = [
- "candid 0.7.0-beta.1",
- "ic-cdk",
- "ic-cdk-macros",
- "serde",
- "union-utils",
 ]
 
 [[package]]
@@ -915,7 +904,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-macros",
  "serde",
- "union-utils",
+ "union_utils",
 ]
 
 [[package]]
@@ -931,24 +920,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5fecdca9a5291cc2b8dcf7dc02453fee791a280f3743cb0905f8822ae463b3fe"
 
 [[package]]
-name = "voting_token"
-version = "0.1.0"
-dependencies = [
- "ic-cdk",
- "ic-cdk-macros",
- "serde",
- "union-utils",
-]
-
-[[package]]
-name = "votings"
+name = "voting_manager"
 version = "0.1.0"
 dependencies = [
  "candid 0.7.0-beta.1",
  "ic-cdk",
  "ic-cdk-macros",
  "serde",
- "union-utils",
+ "union_utils",
+]
+
+[[package]]
+name = "voting_token"
+version = "0.1.0"
+dependencies = [
+ "ic-cdk",
+ "ic-cdk-macros",
+ "serde",
+ "union_utils",
 ]
 
 [[package]]

@@ -1,10 +1,11 @@
+use std::time::{Duration, UNIX_EPOCH};
+
 use chrono::prelude::DateTime;
 use chrono::Utc;
 use ic_cdk::api::call::call_raw;
 use ic_cdk::api::time;
 use ic_cdk::export::candid::{IDLArgs, Principal};
 use ic_cdk::{caller, print, trap};
-use std::time::{Duration, UNIX_EPOCH};
 
 use crate::types::*;
 

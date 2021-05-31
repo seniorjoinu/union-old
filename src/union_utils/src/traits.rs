@@ -30,7 +30,7 @@ service : {
 }
  */
 pub trait IUnionWallet {
-    async fn _union_call(p: Vec<RemoteCallPayload>, voting_id: VotingId) -> Vec<RemoteCallResult>;
+    fn _union_call(p: Vec<RemoteCallPayload>, voting_id: VotingId) -> Vec<RemoteCallResult>;
 }
 
 /*

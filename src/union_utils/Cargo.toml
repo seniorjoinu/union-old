@@ -1,5 +1,5 @@
 [package]
-name = "union-utils"
+name = "union_utils"
 version = "0.1.0"
 authors = ["Александр Втюрин <senior.joinu@gmail.com>"]
 edition = "2018"
@@ -9,4 +9,3 @@ edition = "2018"
 ic-cdk = "0.2.4"
 chrono = "0.4.19"
 serde = "1.0.126"
-async_trait = "0.1.50"

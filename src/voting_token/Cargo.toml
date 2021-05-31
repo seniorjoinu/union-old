@@ -12,4 +12,4 @@ path = "lib.rs"
 ic-cdk = "0.2.4"
 ic-cdk-macros = "0.2.4"
 serde = "1.0.126"
-union-utils = { path = "../union-utils" }
+union_utils = { path = "../union_utils" }
