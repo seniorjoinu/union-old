@@ -9,7 +9,7 @@ use ic_cdk::export::Principal;
  *      method_name: text;
  * };
  */
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Hash, Eq, PartialEq, Debug, CandidType, Deserialize)]
 pub struct RemoteCallEndpoint {
     pub canister_id: Principal,
     pub method_name: String,
@@ -91,4 +91,14 @@ pub struct CanisterInfo {
     pub description: String,
 }
 
-pub type VotingId = usize;
+/*
+ * type VotingId = record {
+ *      union_wallet : principal;
+ *      idx : nat64;
+ * };
+ */
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct VotingId {
+    pub union_wallet: Principal,
+    pub idx: usize
+}
