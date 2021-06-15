@@ -1,0 +1,31 @@
+type Error = variant {
+    EmitterAlreadyRegistered;
+    EmitterNotRegistered;
+    AccessDenied;
+    HistoryLookupError;
+};
+
+type VotingPowerResult = variant {
+    Ok : nat64;
+    Err : Error;
+};
+
+type SimpleResult = variant {
+    Ok : null;
+    Err : Error;
+};
+
+type TokenMoveEvent = record {
+    from : Account;
+    to : Account;
+    qty : nat64;
+};
+
+service : {
+    "voting_power_of_at" : (principal, principal, int64) -> VotingPowerResult;
+    "total_voting_power_at" : (principal, int64) -> VotingPowerResult;
+    "register_emitter" : () -> SimpleResult;
+    "unregister_emitter" : () -> SimpleResult;
+
+    "handle_on_move" : (TokenMoveEvent) -> SimpleResult;
+}

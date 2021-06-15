@@ -4,10 +4,10 @@ use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 
 /*
- * type RemoteCallEndpoint = record {
- *      canister_id: principal;
- *      method_name: text;
- * };
+ type RemoteCallEndpoint = record {
+      canister_id: principal;
+      method_name: text;
+ };
  */
 #[derive(Clone, Hash, Eq, PartialEq, Debug, CandidType, Deserialize)]
 pub struct RemoteCallEndpoint {
@@ -16,11 +16,11 @@ pub struct RemoteCallEndpoint {
 }
 
 /*
- * type RemoteCallPayload = record {
- *      endpoint: RemoteCallEndpoint;
- *      idl_str_args: text;
- *      payment: int64;
- * };
+ type RemoteCallPayload = record {
+      endpoint: RemoteCallEndpoint;
+      idl_str_args: text;
+      payment: int64;
+ };
  */
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct RemoteCallPayload {
@@ -30,11 +30,11 @@ pub struct RemoteCallPayload {
 }
 
 /*
- * type RemoteCallError = variant {
- *      UnableToParseArgs;
- *      UnableToSerializeArgs;
- *      RemoteCallReject : text;
- * };
+ type RemoteCallError = variant {
+      UnableToParseArgs;
+      UnableToSerializeArgs;
+      RemoteCallReject : text;
+ };
  */
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum RemoteCallError {
@@ -44,18 +44,18 @@ pub enum RemoteCallError {
 }
 
 /*
- * type RemoteCallResult = variant {
- *      Ok : blob;
- *      Err : RemoteCallError;
- * };
+ type RemoteCallResult = variant {
+      Ok : blob;
+      Err : RemoteCallError;
+ };
  */
 pub type RemoteCallResult = Result<Vec<u8>, RemoteCallError>;
 
 /*
- * type Controlled_* = record {
- *      data : *;
- *      controller : opt principal;
- * };
+ type Controlled_* = record {
+      data : *;
+      controller : opt principal;
+ };
  */
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Controlled<T> {
@@ -64,9 +64,9 @@ pub struct Controlled<T> {
 }
 
 impl<T> Controlled<T> {
-    pub fn by_caller(data: T) -> Controlled<T> {
+    pub fn by(exact: Principal, data: T) -> Controlled<T> {
         Controlled {
-            controller: Some(caller()),
+            controller: Some(exact),
             data,
         }
     }
@@ -77,13 +77,21 @@ impl<T> Controlled<T> {
             data,
         }
     }
+    
+    pub fn is_controller(&self, principal: Principal) -> bool {
+        if let Some(controller) = self.controller.clone() {
+            return controller == principal;
+        }
+        
+        true
+    }
 }
 
 /*
- * type CanisterInfo = record {
- *      canister_id : principal;
- *      description : text;
- * };
+ type CanisterInfo = record {
+      canister_id : principal;
+      description : text;
+ };
  */
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct CanisterInfo {
@@ -92,13 +100,35 @@ pub struct CanisterInfo {
 }
 
 /*
- * type VotingId = record {
- *      union_wallet : principal;
- *      idx : nat64;
- * };
+ type VotingId = record {
+      union_wallet : principal;
+      idx : nat64;
+ };
  */
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct VotingId {
     pub union_wallet: Principal,
-    pub idx: usize
+    pub idx: usize,
+}
+
+/*
+ type Account = variant {
+      None;
+      Some : principal;
+ };
+ */
+pub type Account = Option<Principal>;
+
+/*
+ type TokenMoveEvent = record {
+      from : Account;
+      to : Account;
+      qty : nat64;
+ };
+ */
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct TokenMoveEvent {
+    pub from: Account,
+    pub to: Account,
+    pub qty: u64
 }

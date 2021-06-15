@@ -941,6 +941,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "voting_power_history"
+version = "0.1.0"
+dependencies = [
+ "ic-cdk",
+ "ic-cdk-macros",
+ "serde",
+ "union_utils",
+]
+
+[[package]]
 name = "wasi"
 version = "0.9.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
