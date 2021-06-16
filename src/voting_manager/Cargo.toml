@@ -9,8 +9,8 @@ crate-type = ["cdylib"]
 path = "lib.rs"
 
 [dependencies]
-ic-cdk = "0.2.4"
-ic-cdk-macros = "0.2.4"
+ic-cdk = "0.3.0"
+ic-cdk-macros = "0.3.0"
 serde = "1.0.126"
-candid = "0.7.0-beta.1"
+candid = "0.7.0"
 union_utils = { path = "../union_utils" }

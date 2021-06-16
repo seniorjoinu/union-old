@@ -1,5 +1,5 @@
 [package]
-name = "voting_power_history"
+name = "voting_power_ledger"
 version = "0.1.0"
 authors = ["Александр Втюрин <senior.joinu@gmail.com>"]
 edition = "2018"
@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 path = "lib.rs"
 
 [dependencies]
-ic-cdk = "0.2.4"
-ic-cdk-macros = "0.2.4"
+ic-cdk = "0.3.0"
+ic-cdk-macros = "0.3.0"
 serde = "1.0.126"
 union_utils = { path = "../union_utils" }

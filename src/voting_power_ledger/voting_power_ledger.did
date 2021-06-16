@@ -11,7 +11,7 @@ type VotingPowerResult = variant {
 };
 
 type SimpleResult = variant {
-    Ok : null;
+    Ok;
     Err : Error;
 };
 

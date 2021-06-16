@@ -12,8 +12,8 @@ use ic_cdk::{call, caller, print, trap};
 
 use crate::types::*;
 
-fn make_time(nanosec: i64) -> String {
-    let d = UNIX_EPOCH + Duration::from_nanos(nanosec.unsigned_abs());
+fn make_time(nanos: u64) -> String {
+    let d = UNIX_EPOCH + Duration::from_nanos(nanos);
     let datetime = DateTime::<Utc>::from(d);
 
     datetime.format("%Y-%m-%d %H:%M:%S.%f").to_string()
@@ -27,7 +27,7 @@ pub fn log(msg: &str) {
         msg
     ))
 }
-
+/*
 pub async fn remote_call(entry: RemoteCallPayload) -> Result<Vec<u8>, RemoteCallError> {
     let idl_args = entry
         .idl_str_args
@@ -59,7 +59,7 @@ pub async fn remote_call(entry: RemoteCallPayload) -> Result<Vec<u8>, RemoteCall
 
     Ok(result)
 }
-
+*/
 pub fn only_by(controller_opt: Option<Principal>) {
     if let Some(controller) = controller_opt {
         if controller != caller() {

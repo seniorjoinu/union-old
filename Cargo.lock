@@ -142,14 +142,14 @@ checksum = "65f05b872d010281c905c4e6ff2079c1341d1e527e05f3bfab88d49ea3269def"
 dependencies = [
  "byteorder",
  "candid_derive",
- "codespan-reporting",
+ "codespan-reporting 0.9.5",
  "hex",
  "ic-types",
  "lalrpop",
  "lalrpop-util",
  "leb128",
  "logos",
- "num-bigint",
+ "num-bigint 0.3.2",
  "num-traits",
  "num_enum",
  "paste",
@@ -161,22 +161,22 @@ dependencies = [
 
 [[package]]
 name = "candid"
-version = "0.7.0-beta.1"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5d06fcfea4bccb4d6fa62dc4c11801a00fe4755381fa5fa0c6937f8b5260141"
+checksum = "a656d2564dd6fe665cff6051aeaa022bcee3dfc3b91ce2a573d3e593a19bb751"
 dependencies = [
  "anyhow",
  "binread",
  "byteorder",
  "candid_derive",
- "codespan-reporting",
+ "codespan-reporting 0.11.1",
  "hex",
  "ic-types",
  "lalrpop",
  "lalrpop-util",
  "leb128",
  "logos",
- "num-bigint",
+ "num-bigint 0.4.0",
  "num-traits",
  "num_enum",
  "paste",
@@ -228,6 +228,16 @@ name = "codespan-reporting"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e0762455306b1ed42bc651ef6a2197aabda5e1d4a43c34d5eab5c1a3634e81d"
+dependencies = [
+ "termcolor",
+ "unicode-width",
+]
+
+[[package]]
+name = "codespan-reporting"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3538270d33cc669650c4b093848450d380def10c331d38c768e34cac80576e6e"
 dependencies = [
  "termcolor",
  "unicode-width",
@@ -339,6 +349,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
+name = "fungible_token"
+version = "0.1.0"
+dependencies = [
+ "ic-cdk",
+ "ic-cdk-macros",
+ "serde",
+ "union_utils",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -382,9 +402,9 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "ic-cdk"
-version = "0.2.4"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae261fe701ff53bf985840749a67da01beb89c8bdb7a7d8fedbd772c72556ea8"
+checksum = "6f385e97263deb4469938ba1bbbb0a0259294132ca2523e20a971225571d5485"
 dependencies = [
  "candid 0.6.21",
  "cfg-if 0.1.10",
@@ -394,9 +414,9 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk-macros"
-version = "0.2.4"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d18985bb2a060d6d3ff052812b1067ed7e989088369a98c24ffd3de08b14030b"
+checksum = "5233d71766be2c74f3433a51b8d4a584f8b416a87a961ce0e579110bc30aa683"
 dependencies = [
  "candid 0.6.21",
  "ic-cdk",
@@ -409,13 +429,15 @@ dependencies = [
 
 [[package]]
 name = "ic-types"
-version = "0.1.2"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "968dbc1cc04bf93e94c2ffd3cb370c451d2136425dd38e9ed4cc5ca425d737af"
+checksum = "ceb8f8b743b686f4afb383b5b66ac80a695f7e0dc4995841efe271cd668cc208"
 dependencies = [
  "base32",
  "crc32fast",
+ "hex",
  "serde",
+ "serde_bytes",
  "sha2",
  "thiserror",
 ]
@@ -539,6 +561,17 @@ name = "num-bigint"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d0a3d5e207573f948a9e5376662aa743a2ea13f7c50a554d7af443a73fbfeba"
+dependencies = [
+ "autocfg",
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
+name = "num-bigint"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e0d047c1062aa51e256408c560894e5251f08925980e53cf1aa5bd00eec6512"
 dependencies = [
  "autocfg",
  "num-integer",
@@ -766,16 +799,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "shares_token"
-version = "0.1.0"
-dependencies = [
- "ic-cdk",
- "ic-cdk-macros",
- "serde",
- "union_utils",
-]
-
-[[package]]
 name = "siphasher"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -910,7 +933,7 @@ dependencies = [
 name = "union_wallet"
 version = "0.1.0"
 dependencies = [
- "candid 0.7.0-beta.1",
+ "candid 0.7.0",
  "ic-cdk",
  "ic-cdk-macros",
  "serde",
@@ -933,7 +956,7 @@ checksum = "5fecdca9a5291cc2b8dcf7dc02453fee791a280f3743cb0905f8822ae463b3fe"
 name = "voting_manager"
 version = "0.1.0"
 dependencies = [
- "candid 0.7.0-beta.1",
+ "candid 0.7.0",
  "ic-cdk",
  "ic-cdk-macros",
  "serde",
@@ -941,7 +964,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "voting_power_history"
+name = "voting_power_ledger"
 version = "0.1.0"
 dependencies = [
  "ic-cdk",

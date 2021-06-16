@@ -2,6 +2,14 @@ use std::collections::HashMap;
 
 use ic_cdk::export::candid::{CandidType, Deserialize, Principal};
 
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum Error {
+    EmitterAlreadyRegistered,
+    EmitterNotRegistered,
+    AccessDenied,
+    HistoryLookupFatalError,
+}
+
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct VotingPowerEntry {
     pub timestamp: i64,
@@ -21,37 +29,7 @@ pub struct VotingPowerLedger {
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct GlobalVotingPowerLedger(pub HashMap<Principal, VotingPowerLedger>);
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum Error {
-    EmitterAlreadyRegistered,
-    EmitterNotRegistered,
-    AccessDenied,
-    HistoryLookupError,
-}
-
 impl GlobalVotingPowerLedger {
-    // caller == canister_id
-    pub fn register_voting_power_emitter(&mut self, canister_id: Principal) -> Result<(), Error> {
-        if self.0.contains_key(&canister_id) {
-            return Err(Error::EmitterAlreadyRegistered);
-        }
-
-        self.0.insert(canister_id, VotingPowerLedger::default());
-
-        Ok(())
-    }
-
-    // caller == canister_id
-    pub fn unregister_voting_power_emitter(&mut self, canister_id: Principal) -> Result<(), Error> {
-        if !self.0.contains_key(&canister_id) {
-            return Err(Error::EmitterNotRegistered);
-        }
-
-        self.0.remove(&canister_id);
-
-        Ok(())
-    }
-
     pub fn supply_total_voting_power_entry(
         &mut self,
         canister_id: Principal,
@@ -60,8 +38,8 @@ impl GlobalVotingPowerLedger {
     ) -> Result<(), Error> {
         let ledger = self
             .0
-            .get_mut(&canister_id)
-            .ok_or(Error::EmitterNotRegistered)?;
+            .entry(canister_id)
+            .or_insert_with(VotingPowerLedger::default);
 
         let entry = VotingPowerEntry {
             timestamp,
@@ -83,16 +61,12 @@ impl GlobalVotingPowerLedger {
     ) -> Result<(), Error> {
         let ledger = self
             .0
-            .get_mut(&canister_id)
-            .ok_or(Error::EmitterNotRegistered)?;
-
-        let history = match ledger.history.get_mut(&account_id) {
-            None => {
-                ledger.history.insert(account_id, VotingPowerHistory::new());
-                ledger.history.get_mut(&account_id).unwrap()
-            }
-            Some(h) => h,
-        };
+            .entry(canister_id)
+            .or_insert_with(VotingPowerLedger::default);
+        let history = ledger
+            .history
+            .entry(account_id)
+            .or_insert_with(VotingPowerHistory::new);
 
         let entry = VotingPowerEntry {
             timestamp,
@@ -116,7 +90,7 @@ impl GlobalVotingPowerLedger {
             None => Ok(0),
             Some(history) => match lookup_history_at(history, timestamp) {
                 // if this executes - something really wrong with the code
-                None => Err(Error::HistoryLookupError),
+                None => Err(Error::HistoryLookupFatalError),
                 Some(vp) => Ok(vp),
             },
         }
@@ -129,7 +103,7 @@ impl GlobalVotingPowerLedger {
     ) -> Result<u64, Error> {
         let ledger = self.0.get(canister_id).ok_or(Error::EmitterNotRegistered)?;
 
-        lookup_history_at(&ledger.total_voting_power, timestamp).ok_or(Error::HistoryLookupError)
+        lookup_history_at(&ledger.total_voting_power, timestamp).ok_or(Error::HistoryLookupFatalError)
     }
 }
 
