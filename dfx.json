@@ -1,11 +1,24 @@
 {
   "canisters": {
-    "voting_token": {
-      "build": "./build-shares_token.sh",
-      "candid": "src/shares_token/shares_token.did",
-      "wasm": "target/wasm32-unknown-unknown/debug/shares_token-opt.wasm",
+    "voting_power_ledger": {
+      "build": "./build-voting_power_ledger.sh",
+      "candid": "src/voting_power_ledger/voting_power_ledger.did",
+      "wasm": "target/wasm32-unknown-unknown/debug/voting_power_ledger-opt.wasm",
       "type": "custom"
     },
+    "fungible_token": {
+      "build": "./build-fungible_token.sh",
+      "candid": "src/fungible_token/fungible_token.did",
+      "wasm": "target/wasm32-unknown-unknown/debug/fungible_token-opt.wasm",
+      "type": "custom"
+    },
+    "claim_token": {
+      "build": "./build-claim_token.sh",
+      "candid": "src/claim_token/claim_token.did",
+      "wasm": "target/wasm32-unknown-unknown/debug/claim_token-opt.wasm",
+      "type": "custom"
+    },
+
     "voting_manager": {
       "build": "./build-voting_manager.sh",
       "candid": "src/voting_manager/voting_manager.did",

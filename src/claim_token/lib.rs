@@ -8,25 +8,22 @@ use ic_cdk_macros::{init, query, update};
 use union_utils::fns::{log, send_events};
 use union_utils::types::{Account, OnMoveListener, OnMoveListenersInfo};
 
-use crate::utils::{
-    Controllers, Error, FungibleToken, FungibleTokenInfo, FungibleTokenInitPayload,
-    FungibleTokenTransferEntry,
-};
+use crate::utils::{ClaimToken, ClaimTokenInfo, ClaimTokenInitPayload, Controllers, Error};
 
 mod utils;
 
-static mut TOKEN: Option<FungibleToken> = None;
+static mut TOKEN: Option<ClaimToken> = None;
 
 #[init]
-fn init(payload: FungibleTokenInitPayload) {
-    log("fungible_token.init()");
+fn init(payload: ClaimTokenInitPayload) {
+    log("claim_token.init()");
 
     let c = payload
         .controllers
         .unwrap_or_else(|| Controllers::single(Account::Some(caller())));
 
-    let mut token = FungibleToken {
-        balances: HashMap::new(),
+    let mut token = ClaimToken {
+        claims: HashMap::new(),
         total_supply: 0,
         on_move_listeners: OnMoveListenersInfo::default(),
         info: payload.info,
@@ -51,17 +48,17 @@ fn init(payload: FungibleTokenInitPayload) {
 }
 
 #[query]
-fn balance_of(token_holder: Principal) -> u64 {
-    log("fungible_token.balance_of()");
+fn has_claim(token_holder: Principal) -> bool {
+    log("claim_token.has_claim()");
 
     let token = unsafe { TOKEN.as_ref().unwrap() };
 
-    token.balance_of(&token_holder)
+    token.has_claim(&token_holder)
 }
 
 #[query]
 fn total_supply() -> u64 {
-    log("fungible_token.total_supply()");
+    log("claim_token.total_supply()");
 
     let token = unsafe { TOKEN.as_ref().unwrap() };
 
@@ -69,8 +66,8 @@ fn total_supply() -> u64 {
 }
 
 #[query]
-fn info() -> FungibleTokenInfo {
-    log("fungible_token.info()");
+fn info() -> ClaimTokenInfo {
+    log("claim_token.info()");
 
     let token = unsafe { TOKEN.as_ref().unwrap() };
 
@@ -78,8 +75,8 @@ fn info() -> FungibleTokenInfo {
 }
 
 #[update]
-fn update_info(new_info: FungibleTokenInfo) -> Result<FungibleTokenInfo, Error> {
-    log("fungible_token.update_info()");
+fn update_info(new_info: ClaimTokenInfo) -> Result<ClaimTokenInfo, Error> {
+    log("claim_token.update_info()");
 
     let token = unsafe { TOKEN.as_mut().unwrap() };
 
@@ -88,7 +85,7 @@ fn update_info(new_info: FungibleTokenInfo) -> Result<FungibleTokenInfo, Error> 
 
 #[query]
 fn controllers() -> Controllers {
-    log("fungible_token.controllers()");
+    log("claim_token.controllers()");
 
     let token = unsafe { TOKEN.as_ref().unwrap() };
 
@@ -97,7 +94,7 @@ fn controllers() -> Controllers {
 
 #[update]
 fn update_info_controller(new_controller: Account) -> Result<(), Error> {
-    log("fungible_token.update_info_controller()");
+    log("claim_token.update_info_controller()");
 
     let token = unsafe { TOKEN.as_mut().unwrap() };
 
@@ -105,17 +102,26 @@ fn update_info_controller(new_controller: Account) -> Result<(), Error> {
 }
 
 #[update]
-fn update_mint_controller(new_controller: Account) -> Result<(), Error> {
-    log("fungible_token.update_mint_controller()");
+fn update_issue_controller(new_controller: Account) -> Result<(), Error> {
+    log("claim_token.update_issue_controller()");
 
     let token = unsafe { TOKEN.as_mut().unwrap() };
 
-    token.update_mint_controller(new_controller, caller())
+    token.update_issue_controller(new_controller, caller())
+}
+
+#[update]
+fn update_revoke_controller(new_controller: Account) -> Result<(), Error> {
+    log("claim_token.update_revoke_controller()");
+
+    let token = unsafe { TOKEN.as_mut().unwrap() };
+
+    token.update_revoke_controller(new_controller, caller())
 }
 
 #[update]
 fn update_on_move_controller(new_controller: Account) -> Result<(), Error> {
-    log("fungible_token.update_on_move_controller()");
+    log("claim_token.update_on_move_controller()");
 
     let token = unsafe { TOKEN.as_mut().unwrap() };
 
@@ -123,14 +129,14 @@ fn update_on_move_controller(new_controller: Account) -> Result<(), Error> {
 }
 
 #[update]
-async fn mint(entries: Vec<FungibleTokenTransferEntry>) -> Vec<Result<(), Error>> {
-    log("fungible_token.mint()");
+async fn issue(recipients: Vec<Principal>) -> Vec<Result<(), Error>> {
+    log("claim_token.issue()");
 
     let token = unsafe { TOKEN.as_mut().unwrap() };
 
-    let results: Vec<_> = entries
+    let results: Vec<_> = recipients
         .into_iter()
-        .map(|entry| token.mint(entry.to, entry.qty, caller()))
+        .map(|to| token.issue(to, caller()))
         .map(|res| async {
             match res {
                 Ok(ev_n_list) => {
@@ -146,14 +152,14 @@ async fn mint(entries: Vec<FungibleTokenTransferEntry>) -> Vec<Result<(), Error>
 }
 
 #[update]
-async fn send(entries: Vec<FungibleTokenTransferEntry>) -> Vec<Result<(), Error>> {
-    log("fungible_token.send()");
+async fn revoke(holders: Vec<Principal>) -> Vec<Result<(), Error>> {
+    log("claim_token.revoke()");
 
     let token = unsafe { TOKEN.as_mut().unwrap() };
 
-    let results: Vec<_> = entries
+    let results: Vec<_> = holders
         .into_iter()
-        .map(|entry| token.send(caller(), entry.to, entry.qty))
+        .map(|from| token.revoke(from, caller()))
         .map(|res| async {
             match res {
                 Ok(ev_n_list) => {
@@ -166,23 +172,11 @@ async fn send(entries: Vec<FungibleTokenTransferEntry>) -> Vec<Result<(), Error>
         .collect();
 
     join_all(results).await
-}
-
-#[update]
-async fn burn(quantity: u64) -> Result<(), Error> {
-    log("fungible_token.burn()");
-
-    let token = unsafe { TOKEN.as_mut().unwrap() };
-
-    let ev_and_listeners = token.burn(caller(), quantity)?;
-    send_events(ev_and_listeners).await;
-
-    Ok(())
 }
 
 #[update]
 fn subscribe_on_move(listeners: Vec<OnMoveListener>) -> Vec<Result<u64, Error>> {
-    log("fungible_token.subscribe_on_move()");
+    log("claim_token.subscribe_on_move()");
 
     let token = unsafe { TOKEN.as_mut().unwrap() };
 
@@ -194,7 +188,7 @@ fn subscribe_on_move(listeners: Vec<OnMoveListener>) -> Vec<Result<u64, Error>> 
 
 #[update]
 fn unsubscribe_on_move(listener_ids: Vec<u64>) -> Vec<Result<OnMoveListener, Error>> {
-    log("fungible_token.unsubscribe_on_move()");
+    log("claim_token.unsubscribe_on_move()");
 
     let token = unsafe { TOKEN.as_mut().unwrap() };
 

@@ -5,20 +5,19 @@ type OnMoveListenerError = variant {
 };
 
 type Error = variant {
-    InsufficientBalance;
+    AlreadyHasClaim;
+    DoesNotHaveClaimYet;
     AccessDenied;
     ForbiddenOperation;
     ListenerError : OnMoveListenerError;
 };
 
-type FungibleTokenInfo = record {
+type ClaimTokenInfo = record {
     name : Text;
-    symbol : Text;
-    decimals : nat8;
 };
 
 type InfoResult = variant {
-    Ok : FungibleTokenInfo;
+    Ok : ClaimTokenInfo;
     Err : Error;
 };
 
@@ -28,7 +27,8 @@ type Account = variant {
 }
 
 type Controllers = record {
-    mint_controller : Account;
+    issue_controller : Account;
+    revoke_controller : Account;
     on_move_controller : Account;
     info_controller : Account;
 };
@@ -58,15 +58,10 @@ type OnMoveListener {
     endpoint : RemoveCallEndpoint;
 };
 
-type FungibleTokenInitPayload {
-    info : FungibleTokenInfo;
+type ClaimTokenInitPayload {
+    info : ClaimTokenInfo;
     controllers : variant { None; Some : Controllers; };
     on_move_listeners : vec OnMoveListener;
-};
-
-type FungibleTokenTransferEntry {
-    to : principal;
-    qty : nat64;
 };
 
 type SubscribeResult = variant {
@@ -80,19 +75,19 @@ type UnsubscribeResult = variant {
 };
 
 service : {
-    "info" : () -> (FungibleTokenInfo) query;
-    "update_info" : (FungibleTokenInfo) -> InfoResult;
+    "info" : () -> (ClaimTokenInfo) query;
+    "update_info" : (ClaimTokenInfo) -> InfoResult;
 
     "controllers" : () -> (Controllers) query;
     "update_info_controller" : (Account) -> (SimpleResult);
-    "update_mint_controller" : (Account) -> (SimpleResult);
+    "update_issue_controller" : (Account) -> (SimpleResult);
+    "update_revoke_controller" : (Account) -> (SimpleResult);
     "update_on_move_controller" : (Account) -> (SimpleResult);
 
-    "balance_of" : (principal) -> (nat64) query;
+    "has_claim" : (principal) -> (bool) query;
     "total_supply" : () -> (nat64) query;
-    "mint" : (vec FungibleTokenTransferEntry) -> (vec SimpleResult);
-    "send" : (vec FungibleTokenTransferEntry) -> (vec SimpleResult);
-    "burn" : (nat64) -> (SimpleResult);
+    "issue" : (vec principal) -> (vec SimpleResult);
+    "revoke" : (vec principal) -> (vec SimpleResult);
 
     "subscribe_on_move" : (vec OnMoveListener) -> (vec SubscribeResult);
     "unsubscribe_on_move" : (vec nat64) -> (vec UnsubscribeResult);

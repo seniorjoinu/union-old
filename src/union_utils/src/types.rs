@@ -19,14 +19,14 @@ pub struct RemoteCallEndpoint {
 type RemoteCallPayload = record {
      endpoint: RemoteCallEndpoint;
      idl_str_args: text;
-     payment: int64;
+     payment: nat64;
 };
 */
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct RemoteCallPayload {
     pub endpoint: RemoteCallEndpoint,
     pub idl_str_args: String,
-    pub payment: i64,
+    pub payment: u64,
 }
 
 /*

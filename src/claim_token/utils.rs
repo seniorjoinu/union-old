@@ -8,15 +8,17 @@ use union_utils::types::{
 };
 
 /*
-  type Controllers = record {
-    mint_controller : Account;
-    on_move_controller : Account;
-    info_controller : Account;
-  }
- */
+ type Controllers = record {
+   issue_controller : Account;
+   revoke_controller : Account;
+   on_move_controller : Account;
+   info_controller : Account;
+ }
+*/
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Controllers {
-    pub mint_controller: Account,
+    pub issue_controller: Account,
+    pub revoke_controller: Account,
     pub on_move_controller: Account,
     pub info_controller: Account,
 }
@@ -24,7 +26,8 @@ pub struct Controllers {
 impl Controllers {
     pub fn single(controller: Account) -> Controllers {
         Controllers {
-            mint_controller: controller,
+            issue_controller: controller,
+            revoke_controller: controller,
             on_move_controller: controller,
             info_controller: controller,
         }
@@ -32,113 +35,80 @@ impl Controllers {
 }
 
 /*
-  type FungibleTokenTransferEntry {
-    to : principal;
-    qty : nat64;
-  }
- */
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct FungibleTokenTransferEntry {
-    pub to: Principal,
-    pub qty: u64
-}
-
-/*
-  type FungibleTokenInitPayload {
-    info : FungibleTokenInfo;
-    controllers : variant { None; Some : Controllers; };
-    on_move_listeners : vec OnMoveListener;
-  }
- */
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct FungibleTokenInitPayload {
-    pub info: FungibleTokenInfo, 
-    pub controllers: Option<Controllers>,
-    pub on_move_listeners: Vec<OnMoveListener>
-}
-
-/*
- type FungibleTokenInfo = record {
-   name : Text;
-   symbol : Text;
-   decimals : nat8;
+ type ClaimTokenInitPayload {
+   info : ClaimTokenInfo;
+   controllers : variant { None; Some : Controllers; };
+   on_move_listeners : vec OnMoveListener;
  }
 */
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct FungibleTokenInfo {
+pub struct ClaimTokenInitPayload {
+    pub info: ClaimTokenInfo,
+    pub controllers: Option<Controllers>,
+    pub on_move_listeners: Vec<OnMoveListener>,
+}
+
+/*
+ type ClaimTokenInfo = record {
+   name : Text;
+ }
+*/
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct ClaimTokenInfo {
     pub name: String,
-    pub symbol: String,
-    pub decimals: u8,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct FungibleToken {
-    pub balances: HashMap<Principal, u64>,
+pub struct ClaimToken {
+    pub claims: HashMap<Principal, bool>,
     pub total_supply: u64,
-    pub info: FungibleTokenInfo,
+    pub info: ClaimTokenInfo,
     pub on_move_listeners: OnMoveListenersInfo,
     pub controllers: Controllers,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum Error {
-    InsufficientBalance,
+    AlreadyHasClaim,
+    DoesNotHaveClaimYet,
     AccessDenied,
     ForbiddenOperation,
     ListenerError(OnMoveListenerError),
 }
 
-impl FungibleToken {
-    pub fn mint(
+impl ClaimToken {
+    pub fn issue(
         &mut self,
         to: Principal,
-        qty: u64,
         caller: Principal,
     ) -> Result<TokenMoveEventAndListeners, Error> {
-        check_controlled_op(self.controllers.mint_controller, caller)?;
+        check_controlled_op(self.controllers.issue_controller, caller)?;
 
-        let prev_balance = self.balance_of(&to);
+        if self.has_claim(&to) {
+            return Err(Error::AlreadyHasClaim);
+        }
 
-        self.total_supply += qty;
-        self.balances.insert(to, prev_balance + qty);
+        self.claims.insert(to, true);
+        self.total_supply += 1;
 
-        Ok(self.create_event_and_find_listeners(Account::None, Account::Some(to), qty))
+        Ok(self.create_event_and_find_listeners(Account::None, Account::Some(to), 1))
     }
 
-    pub fn send(
+    pub fn revoke(
         &mut self,
         from: Principal,
-        to: Principal,
-        qty: u64,
+        caller: Principal,
     ) -> Result<TokenMoveEventAndListeners, Error> {
-        let from_prev_balance = self.balance_of(&from);
-        let to_prev_balance = self.balance_of(&to);
+        check_controlled_op(self.controllers.revoke_controller, caller)?;
 
-        if from_prev_balance < qty {
-            return Err(Error::InsufficientBalance);
+        if !self.has_claim(&from) {
+            return Err(Error::DoesNotHaveClaimYet);
         }
 
-        self.balances.insert(from, from_prev_balance - qty);
-        self.balances.insert(to, to_prev_balance + qty);
+        self.claims.insert(from, false);
+        self.total_supply -= 1;
 
-        Ok(self.create_event_and_find_listeners(
-            Account::Some(from),
-            Account::Some(to),
-            qty,
-        ))
-    }
-
-    pub fn burn(&mut self, from: Principal, qty: u64) -> Result<TokenMoveEventAndListeners, Error> {
-        let prev_balance = self.balance_of(&from);
-
-        if prev_balance < qty {
-            return Err(Error::InsufficientBalance);
-        }
-
-        self.total_supply -= qty;
-        self.balances.insert(from, prev_balance - qty);
-
-        Ok(self.create_event_and_find_listeners(Account::Some(from), Account::None, qty))
+        Ok(self.create_event_and_find_listeners(Account::Some(from), Account::None, 1))
     }
 
     pub fn subscribe_on_move(
@@ -167,9 +137,9 @@ impl FungibleToken {
 
     pub fn update_info(
         &mut self,
-        new_info: FungibleTokenInfo,
+        new_info: ClaimTokenInfo,
         caller: Principal,
-    ) -> Result<FungibleTokenInfo, Error> {
+    ) -> Result<ClaimTokenInfo, Error> {
         check_controlled_op(self.controllers.info_controller, caller)?;
 
         let old_info = self.info.clone();
@@ -178,14 +148,26 @@ impl FungibleToken {
         Ok(old_info)
     }
 
-    pub fn update_mint_controller(
+    pub fn update_issue_controller(
         &mut self,
-        new_mint_controller: Account,
+        new_issue_controller: Account,
         caller: Principal,
     ) -> Result<(), Error> {
-        check_controlled_op(self.controllers.mint_controller, caller)?;
+        check_controlled_op(self.controllers.issue_controller, caller)?;
 
-        self.controllers.mint_controller = new_mint_controller;
+        self.controllers.issue_controller = new_issue_controller;
+
+        Ok(())
+    }
+
+    pub fn update_revoke_controller(
+        &mut self,
+        new_revoke_controller: Account,
+        caller: Principal,
+    ) -> Result<(), Error> {
+        check_controlled_op(self.controllers.revoke_controller, caller)?;
+
+        self.controllers.revoke_controller = new_revoke_controller;
 
         Ok(())
     }
@@ -214,9 +196,9 @@ impl FungibleToken {
         Ok(())
     }
 
-    pub fn balance_of(&self, token_holder: &Principal) -> u64 {
-        match self.balances.get(&token_holder) {
-            None => 0,
+    pub fn has_claim(&self, holder: &Principal) -> bool {
+        match self.claims.get(&holder) {
+            None => false,
             Some(b) => *b,
         }
     }

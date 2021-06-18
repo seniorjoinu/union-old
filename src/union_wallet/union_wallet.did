@@ -20,6 +20,16 @@ type RemoteCallResult = variant {
     Err : RemoteCallError;
 };
 
+type VotingId = record {
+     union_wallet : principal;
+     idx : nat64;
+};
+
+type UnionCallPayload {
+    program : vec RemoteCallPayload;
+    voting_id : VotingId;
+};
+
 service : {
-    "_union_call" : (vec RemoteCallPayload, nat32) -> (vec RemoteCallResult);
+    "_union_call" : (UnionCallPayload) -> (vec RemoteCallResult);
 }
